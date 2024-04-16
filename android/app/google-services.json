@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "390525289828",
+    "project_id": "bandasderock-a27b0",
+    "storage_bucket": "bandasderock-a27b0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:390525289828:android:999161357ff93d335d2671",
+        "android_client_info": {
+          "package_name": "com.example.bandasderock"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgdtSTXbzg2C-20YAOjp1TSiecv-59i-8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
