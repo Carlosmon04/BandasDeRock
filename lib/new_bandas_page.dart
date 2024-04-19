@@ -1,13 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-class NewUserPage extends StatelessWidget {
-  NewUserPage({super.key});
+class NewUserPage extends StatefulWidget {
+  NewUserPage({Key? key}) : super(key: key);
+
+  @override
+  _NewUserPageState createState() => _NewUserPageState();
+}
+
+class _NewUserPageState extends State<NewUserPage> {
+  final _formKey = GlobalKey<FormState>();
 
   final nombreController = TextEditingController(text: '');
   final albumController = TextEditingController(text: '');
-  final lanzamientoController = TextEditingController(text: 'DD/MM/YY');
-  final votosController = TextEditingController(text: '');
+  final lanzamientoController = TextEditingController(text: '');
+  final votosController = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -18,78 +26,94 @@ class NewUserPage extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              TextField(
-                controller: nombreController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Nombre',
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: nombreController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Nombre',
+                    hintText: 'Nombre de Banda'
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor ingrese el nombre';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              TextField(
-                controller: albumController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Album',
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: albumController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Album',
+                    hintText: 'Album De Su Banda'
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor ingrese el álbum';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 16.0),
-               TextField(
-                controller: lanzamientoController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Lanzamiento',
+                const SizedBox(height: 16.0),
+                
+                
+                TextFormField(
+                  controller: lanzamientoController,
+                
+
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Lanzamiento',
+                    hintText: 'DD/MM/YY'
+                   
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor ingresa la fecha de lanzamiento';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              TextField(
-                controller: votosController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Votos',
+                
+                const SizedBox(height: 16.0),               
+                ElevatedButton(
+                  onPressed: () async {
+                    final instance = FirebaseFirestore.instance;
+
+                    if (_formKey.currentState!.validate()) {
+                      final query = await instance.collection('Bandas').where('Nombre', isEqualTo: nombreController.text.trim()).get();
+                      final quero = await instance.collection('Bandas').where('Album', isEqualTo: albumController.text.trim()).get();
+
+                      if (query.docs.isEmpty && quero.docs.isEmpty) {
+                        final data = {
+                          'Nombre': nombreController.text,
+                          'Album': albumController.text,
+                          'Lanzamiento': lanzamientoController.text,
+                          'Votos': votosController,
+                        };
+
+                        final respuesta = await instance.collection('Bandas').add(data);
+
+                        print(respuesta);
+
+                        Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Ya Existe')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Agregar'),
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: () async {
-                  // Add user to Firebase
-                  //obtener los valores de los textfields
-                  final data = {
-                    'Nombre': nombreController.text,
-                    'Album': albumController.text,
-                    'Lanzamiento': lanzamientoController.text,
-                    'Votos' : int.parse(votosController.text)
-                  };
-
-                  final instance = FirebaseFirestore.instance;
-
-                  //mostrar un icono de carga
-
-                  //agregar con un ID automatico
-                  final respuesta =
-                      await instance.collection('Bandas').add(data);
-
-                  // final respuesta = instance
-                  //             .collection('usuarios/123/asignatutas_asignadas')
-                  //             .add(data);
-
-                  // final respuesta = instance
-                  //     .collection('usuarios')
-                  //     .doc('123')
-                  //     .collection('asignatutas_asignadas')
-                  //     .doc()
-                  //     .set(data);
-
-                  print(respuesta);
-                  Navigator.pop(context);
-                 // Navigator.pushNamed(context, );
-                },
-                child: const Text('Agregar'),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

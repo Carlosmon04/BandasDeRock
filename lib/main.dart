@@ -10,19 +10,14 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  
-
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-   
-
     return MaterialApp(
       title: 'Bandas De Rock',
       debugShowCheckedModeBanner: false,
@@ -30,7 +25,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Bandas'), 
+      home: const MyHomePage(title: 'Bandas'),
       routes: {
         '/new_banda': (context) => NewUserPage(),
       },
@@ -49,16 +44,10 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
-  
-  
 
   @override
   Widget build(BuildContext context) {
-    // final users = firestore.collection('usuarios').get();
     final Todasbandas = firestore.collection('Bandas').snapshots();
-    final borrar =  FirebaseFirestore.instance;
-
-
 
     return Scaffold(
       appBar: AppBar(
@@ -69,43 +58,67 @@ class _MyHomePageState extends State<MyHomePage> {
         stream: Todasbandas,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            final listabandas = snapshot.data!.docs; // La lista de documentos
+            final listabandas = snapshot.data!.docs;
 
             return ListView.builder(
               itemCount: listabandas.length,
               itemBuilder: (context, index) {
                 final banda = listabandas[index];
 
-                // user.id;
+                return Dismissible(
+                  key: Key(banda.id),
+                  direction: DismissDirection.endToStart, // Permitir solo deslizamiento hacia la izquierda
+                  background: Container(
+                    color: Colors.red, // Color de fondo al deslizar
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Icon(Icons.delete, color: Colors.white),
+                  ),
+                  onDismissed: (direction) {
+                    
+                 FirebaseFirestore.instance.collection('Bandas').where('Nombre', isEqualTo:  banda['Nombre'])
+           .get().then((QuerySnapshot){
+            QuerySnapshot.docs.forEach((doc) {doc.reference.delete(); }
+            );
+           });
 
-                return ListTile(
-                  title: Text(banda['Nombre']),
-                  subtitle: Column(  crossAxisAlignment: CrossAxisAlignment.start, children:
-                   [Text(banda['Album']),
-                   Text(banda['Lanzamiento']),
-                   ]
-                   ),
-                   trailing: GestureDetector(
-    onTap: () {
-      // Función de callback cuando se toca el icono
-      print('Botón oprimido: ${banda['Nombre']}');
+                    
+                
+                    // No se realiza ninguna acción al deslizar, ya que la acción se manejará mediante el GestureDetector
+                  },
+                  child: GestureDetector(
+                    onLongPress: () {
+                      // Lógica del gesto al deslizar hacia la izquierda
+                      print('Gesto ejecutado: ${banda['Nombre']}');
+                      
+                      // Aquí puedes agregar la lógica que deseas ejecutar cuando se realice el gesto
+                    },
+                    child: ListTile(
+                      title: Text(banda['Nombre']),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(banda['Album']),
+                          Text(banda['Lanzamiento']),
+                        ],
+                      ),
+                      trailing: GestureDetector(
+                        onTap: () {
+                          // Función de callback cuando se toca el icono de votos
+                          print('Botón oprimido: ${banda['Nombre']}');
 
-    borrar.collection('Bandas').where('Nombre', isEqualTo: banda['Nombre']).get().then((QuerySnapshot) {
-      QuerySnapshot.docs.forEach((doc) {
-       int votosactuales = doc['Votos'];
-       int nuevosvotos = votosactuales + 1;
-       doc.reference.update({'Votos': nuevosvotos});
-       });
-    });
-
-    },
-    child: Column(
-      children: [
-        const Icon(Icons.favorite_rounded,color: Colors.redAccent,),
-        Text('${banda['Votos']}', style: const TextStyle(fontSize: 16),),
-      ],
-    ), 
-  ),
+                          // Incrementa el número de votos en 1
+                          banda.reference.update({'Votos': (banda['Votos'] ?? 0) + 1});
+                        },
+                        child: Column(
+                          children: [
+                            Icon(Icons.favorite_rounded, color: Colors.redAccent),
+                            Text('${banda['Votos'] ?? 0}', style: const TextStyle(fontSize: 16)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               },
             );
@@ -122,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
         },
         tooltip: 'Nueva Banda',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 }
