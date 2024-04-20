@@ -47,7 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final Todasbandas = firestore.collection('Bandas').snapshots();
+    final todasBandas = firestore.collection('Bandas').snapshots();
 
     return Scaffold(
       appBar: AppBar(
@@ -55,67 +55,69 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: Todasbandas,
+        stream: todasBandas,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            final listabandas = snapshot.data!.docs;
+            final listaBandas = snapshot.data!.docs;
 
             return ListView.builder(
-              itemCount: listabandas.length,
+              itemCount: listaBandas.length,
               itemBuilder: (context, index) {
-                final banda = listabandas[index];
+                final banda = listaBandas[index];
+
+                final String? urlImagen = banda['URLimagen'] as String?;
 
                 return Dismissible(
                   key: Key(banda.id),
-                  direction: DismissDirection.endToStart, // Permitir solo deslizamiento hacia la izquierda
+                  direction: DismissDirection.endToStart,
                   background: Container(
-                    color: Colors.red, // Color de fondo al deslizar
+                    color: Colors.red,
                     alignment: Alignment.centerRight,
-                    padding: EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Icon(Icons.delete, color: Colors.white),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: const Icon(Icons.delete, color: Colors.white),
                   ),
                   onDismissed: (direction) {
-                    
-                 FirebaseFirestore.instance.collection('Bandas').where('Nombre', isEqualTo:  banda['Nombre'])
-           .get().then((QuerySnapshot){
-            QuerySnapshot.docs.forEach((doc) {doc.reference.delete(); }
-            );
-           });
-
-                    
-                
-                    // No se realiza ninguna acción al deslizar, ya que la acción se manejará mediante el GestureDetector
+                    banda.reference.delete();
                   },
-                  child: GestureDetector(
-                    onLongPress: () {
-                      // Lógica del gesto al deslizar hacia la izquierda
-                      print('Gesto ejecutado: ${banda['Nombre']}');
-                      
-                      // Aquí puedes agregar la lógica que deseas ejecutar cuando se realice el gesto
-                    },
-                    child: ListTile(
-                      title: Text(banda['Nombre']),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(banda['Album']),
-                          Text(banda['Lanzamiento']),
-                        ],
-                      ),
-                      trailing: GestureDetector(
-                        onTap: () {
-                          // Función de callback cuando se toca el icono de votos
-                          print('Botón oprimido: ${banda['Nombre']}');
+                  child: ListTile(
+                    leading: urlImagen != null
+                        ? Image.network(
+                            urlImagen,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(Icons.image_not_supported, color: Colors.grey, size: 50);
+                            },
+                          )
+                        : null,
+                    title: Text(banda['Nombre']),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(banda['Album']),
+                        Text(banda['Lanzamiento']),
+                      ],
+                    ),
+                    trailing: GestureDetector(
+                      onTap: () {
 
-                          // Incrementa el número de votos en 1
-                          banda.reference.update({'Votos': (banda['Votos'] ?? 0) + 1});
-                        },
-                        child: Column(
-                          children: [
-                            Icon(Icons.favorite_rounded, color: Colors.redAccent),
-                            Text('${banda['Votos'] ?? 0}', style: const TextStyle(fontSize: 16)),
-                          ],
-                        ),
+                        if (urlImagen != null)
+                        {
+                             banda.reference.update({'Votos': (banda['Votos'] ?? 0) + 1});
+                        }
+                        else
+                        {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('No se puede votar por esta banda porque no tiene una imagen.')));
+                        }
+                        
+                      },
+                      child: Column(
+                        children: [
+                          Icon(Icons.favorite_rounded, color: Colors.redAccent),
+                          Text('${banda['Votos'] ?? 0}', style: const TextStyle(fontSize: 16)),
+                        ],
                       ),
                     ),
                   ),
